@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case File: Novus Gradus</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a120b;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+    }
+    .board-frame {
+      width: 95vw;
+      height: 95vh;
+      background: linear-gradient(135deg, #5c4033 0%, #3e2723 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.6);
+    }
+    .corkboard {
+      width: 100%;
+      height: 100%;
+      background-color: #c49a6c;
+      background-image: radial-gradient(circle at 20% 30%, rgba(0,0,0,0.08) 1px, transparent 1px),
+        radial-gradient(circle at 80% 70%, rgba(0,0,0,0.08) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 2px, transparent 2px);
+      background-size: 40px 40px, 60px 60px, 100px 100px;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .case-title {
+      color: #2b1b17;
+      font-size: 1.4rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+      border-bottom: 2px solid #8b4513;
+      padding-bottom: 8px;
+      text-align: center;
+    }
+    .paper {
+      width: 48%;
+      background: #f8f5e9;
+      padding: 15px;
+      margin: 8px;
+      box-shadow: 3px 4px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);
+      position: relative;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #2c2c2c;
+      transition: transform 0.3s ease;
+    }
+    .paper.left { transform: rotate(-2deg); align-self: flex-start; }
+    .paper.right { transform: rotate(2.5deg); align-self: flex-end; }
+    .paper:hover { transform: translateY(-2px); }
+    .pin {
+      position: absolute;
+      width: 12px; height: 12px;
+      background: radial-gradient(circle at 30% 30%, #ff4d4d, #b30000);
+      border-radius: 50%;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+      top: -6px; left: 50%; transform: translateX(-50%);
+    }
+    .paper h3 {
+      font-size: 1rem;
+      border-bottom: 1px dashed #999;
+      padding-bottom: 5px;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+    .paper p { margin-bottom: 8px; opacity: 0.85; }
+    .redacted { background: #222; color: #222; padding: 0 3px; border-radius: 2px; user-select: none; }
+    
+    /* Subtle warning text - blends with body content */
+    .subtle-note {
+      font-style: italic;
+      color: #6b5a4a;
+      opacity: 0.9;
+    }
+    
+    .input-group {
+      margin-top: 12px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .paper input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #444;
+      padding: 6px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: #111;
+      outline: none;
+      transition: border-bottom-color 0.2s, color 0.2s;
+    }
+    .paper input:focus { border-bottom-color: #b30000; }
+    .paper input.correct {
+      border-bottom-color: #27ca40;
+      color: #1a7a28;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    #verify-btn {
+      padding: 10px 24px;
+      background: #2b1b17;
+      color: #d4c5a9;
+      border: 2px solid #5c4033;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 #1a120b;
+      transition: all 0.2s;
+    }
+    #verify-btn:hover:not(:disabled) {
+      background: #3e2723;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 #1a120b;
+    }
+    #verify-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status-msg {
+      color: #2b1b17;
+      font-weight: bold;
+      font-size: 0.9rem;
+      min-height: 20px;
+      text-align: center;
+    }
+    .error { color: #b30000; }
+    .success { color: #27ca40; }
+    .lockout-timer {
+      color: #6b5a4a;
+      font-size: 0.95rem;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+      font-style: italic;
+    }
+    .lockout-timer.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="board-frame">
+    <div class="corkboard">
+      <h1 class="case-title">Case File: Novus Gradus</h1>
+      
+      <!-- Paper 1: GETA (Light & Warm) -->
+      <div class="paper left">
+        <div class="pin"></div>
+        <h3>ARCHIVE #041-☀</h3>
+        <p>The <span class="redacted">GATE</span> opens only to those who walk through fire without burning. Dawn's first light reveals what dusk conceals.</p>
+        <p>Field note: Vertical coordinates in the illuminated sector follow an <strong>inverted paradigm</strong>. What rises from the bottom is counted upward, not down from the peak. The foundation is zero, not the summit. <em class="subtle-note">You will need this knowledge very soon.</em></p>
+        <p>Temperature reading: 37.2°C. Subject radiates warmth beyond normal parameters.</p>
+        <p class="subtle-note">A word of caution: the authentication 
+protocol permits only one attempt per cycle. Should the inscriptions 
+fail to align, the archive enters a quiet period of over half an hour 
+before accepting new credentials. Proceed with deliberation.</p>
+        <div class="input-group">
+          <label>Inscribe the Word of Light</label>
+          <input type="text" id="pass1" placeholder="Enter secret word..." autocomplete="off" maxlength="4">
+        </div>
+      </div>
+
+      <!-- Paper 2: 3738 (Dark & Cold) -->
+      <div class="paper right">
+        <div class="pin"></div>
+        <h3>ARCHIVE #041-❄</h3>
+        <p>Beyond the threshold lies the <span class="redacted">VOID</span>. Numbers whisper in the darkness, counting down from an absent ceiling.</p>
+        <p>Field note: The shadow realm operates on <strong>reversed geometry</strong>. Altitude decreases as you climb. Trust the descent, not the ascent. <em class="subtle-note">This inversion will be essential in the near future.</em></p>
+        <p>Temperature reading: -273.15°C. Absolute zero approached.</p>
+        <p class="subtle-note">Note: The verification sequence allows a 
+single submission. Incorrect entries initiate a standard cooling 
+interval of over half an hour. Accuracy is paramount.</p>
+        <div class="input-group">
+          <label>Inscribe the Code of Darkness</label>
+          <input type="text" id="pass2" placeholder="Enter numerical code..." autocomplete="off" maxlength="4">
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="verify-btn">Verify &amp; Proceed</button>
+        <div class="status-msg" id="status"></div>
+        <div class="lockout-timer" id="lockout">Archive cooling: <span id="timer">37:38</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SECRET_1 = "geta";
+    const SECRET_2 = "3738";
+    const LOCKOUT_SECONDS = 37 * 60 + 38;
+
+    const btn = document.getElementById('verify-btn');
+    const statusEl = document.getElementById('status');
+    const lockoutEl = document.getElementById('lockout');
+    const timerEl = document.getElementById('timer');
+    const pass1 = document.getElementById('pass1');
+    const pass2 = document.getElementById('pass2');
+
+    pass1.addEventListener('input', () => {
+      pass1.classList.toggle('correct', pass1.value.toLowerCase() === SECRET_1);
+    });
+    pass2.addEventListener('input', () => {
+      pass2.classList.toggle('correct', pass2.value.toLowerCase() === SECRET_2);
+    });
+
+    const lockoutEnd = localStorage.getItem('gate_lockout_end');
+    if (lockoutEnd && Date.now() < parseInt(lockoutEnd)) {
+      activateLockout(parseInt(lockoutEnd) - Date.now());
+    }
+
+    btn.addEventListener('click', verify);
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) verify();
+    });
+
+    function verify() {
+      const v1 = pass1.value.trim().toLowerCase();
+      const v2 = pass2.value.trim().toLowerCase();
+
+      if (v1 === SECRET_1 && v2 === SECRET_2) {
+        statusEl.textContent = "Authentication successful. Proceeding...";
+        statusEl.className = "status-msg success";
+        btn.disabled = true;
+        setTimeout(() => {
+          window.location.href = 'https://swobabobs.github.io/a/';
+        }, 800);
+      } else {
+        const lockoutEnd = Date.now() + (LOCKOUT_SECONDS * 1000);
+        localStorage.setItem('gate_lockout_end', lockoutEnd);
+        activateLockout(LOCKOUT_SECONDS * 1000);
+      }
+    }
+
+    function activateLockout(remainingMs) {
+      btn.disabled = true;
+      pass1.disabled = true;
+      pass2.disabled = true;
+      lockoutEl.classList.add('active');
+
+      function updateTimer() {
+        const now = Date.now();
+        const end = parseInt(localStorage.getItem('gate_lockout_end'));
+        const remaining = Math.max(0, Math.floor((end - now) / 1000));
+
+        if (remaining <= 0) {
+          lockoutEl.classList.remove('active');
+          btn.disabled = false;
+          pass1.disabled = false;
+          pass2.disabled = false;
+          localStorage.removeItem('gate_lockout_end');
+          statusEl.textContent = "Cooling period complete. You may try again.";
+          statusEl.className = "status-msg";
+          return;
+        }
+
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        requestAnimationFrame(updateTimer);
+      }
+      updateTimer();
+    }
+  </script>
+
+</body></html>
